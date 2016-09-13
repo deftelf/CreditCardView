@@ -1,49 +1,36 @@
 package com.cooltechworks.creditcarddesign.pager;
 
-import android.os.Bundle;
+import android.content.Context;
 import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 
 import com.cooltechworks.creditcarddesign.CreditCardUtils;
 import com.cooltechworks.creditcarddesign.R;
 
-import static com.cooltechworks.creditcarddesign.CreditCardUtils.EXTRA_CARD_NUMBER;
 import static com.cooltechworks.creditcarddesign.CreditCardUtils.MAX_LENGTH_CARD_NUMBER;
 import static com.cooltechworks.creditcarddesign.CreditCardUtils.MAX_LENGTH_CARD_NUMBER_WITH_SPACES;
 
 /**
  * Created by sharish on 9/1/15.
  */
-public class CardNumberFragment extends  CreditCardFragment {
+public class CardNumberEntryView extends CreditCardEntryView {
 
     EditText mCardNumberView;
 
-    public CardNumberFragment() {
+    public CardNumberEntryView(Context context, String number) {
+        super(context);
 
-    }
-
-    public View onCreateView(LayoutInflater inflater, ViewGroup group, Bundle state) {
-
-        View v = inflater.inflate(R.layout.lyt_card_number, group, false);
+        View v = LayoutInflater.from(getContext()).inflate(R.layout.lyt_card_number, this, true);
         mCardNumberView = (EditText) v.findViewById(R.id.card_number_field);
         mCardNumberView.addTextChangedListener(this);
 
-        String number = "";
-
-        if(getArguments() != null && getArguments().containsKey(EXTRA_CARD_NUMBER)) {
-            number = getArguments().getString(EXTRA_CARD_NUMBER);
-        }
-
-        if(number == null) {
+        if (number == null) {
             number = "";
         }
 
         mCardNumberView.setText(number);
-
-        return v;
     }
 
 
@@ -75,9 +62,6 @@ public class CardNumberFragment extends  CreditCardFragment {
 
     @Override
     public void focus() {
-
-        if(isAdded()) {
-            mCardNumberView.selectAll();
-        }
+        mCardNumberView.selectAll();
     }
 }

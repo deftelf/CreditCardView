@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -16,14 +16,17 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.cooltechworks.creditcarddesign.pager.CardFragmentAdapter;
-import com.cooltechworks.creditcarddesign.pager.CardFragmentAdapter.ICardEntryCompleteListener;
+import com.cooltechworks.creditcarddesign.pager.CardCVVEntryView;
+import com.cooltechworks.creditcarddesign.pager.CardExpiryEntryView;
+import com.cooltechworks.creditcarddesign.pager.CardNameEntryView;
+import com.cooltechworks.creditcarddesign.pager.CardNumberEntryView;
+import com.cooltechworks.creditcarddesign.pager.CreditCardEntryView;
+import com.cooltechworks.creditcarddesign.pager.IActionListener;
 
 import static com.cooltechworks.creditcarddesign.CreditCardUtils.EXTRA_CARD_CVV;
 import static com.cooltechworks.creditcarddesign.CreditCardUtils.EXTRA_CARD_EXPIRY;
 import static com.cooltechworks.creditcarddesign.CreditCardUtils.EXTRA_CARD_HOLDER_NAME;
-import static com.cooltechworks.creditcarddesign.CreditCardUtils.*;
-
+import static com.cooltechworks.creditcarddesign.CreditCardUtils.EXTRA_CARD_NUMBER;
 
 
 public class CardEditActivity extends AppCompatActivity {
@@ -36,18 +39,19 @@ public class CardEditActivity extends AppCompatActivity {
     private String mCVV;
     private String mCardHolderName;
     private String mExpiry;
-    private CardFragmentAdapter mCardAdapter;
+    private Adapter mCardAdapter;
+    private ViewPager pager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_card_edit);
+        setContentView(com.cooltechworks.creditcarddesign.R.layout.activity_card_edit);
 
-        findViewById(R.id.next).setOnClickListener(new View.OnClickListener() {
+        findViewById(com.cooltechworks.creditcarddesign.R.id.next).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                ViewPager pager = (ViewPager) findViewById(R.id.card_field_container_pager);
+                ViewPager pager = (ViewPager) findViewById(com.cooltechworks.creditcarddesign.R.id.card_field_container_pager);
 
                 int max = pager.getAdapter().getCount();
 
@@ -60,7 +64,7 @@ public class CardEditActivity extends AppCompatActivity {
                 }
             }
         });
-        findViewById(R.id.previous).setOnClickListener(new View.OnClickListener() {
+        findViewById(com.cooltechworks.creditcarddesign.R.id.previous).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showPrevious();
@@ -68,7 +72,7 @@ public class CardEditActivity extends AppCompatActivity {
         });
 
         setKeyboardVisibility(true);
-        mCreditCardView = (CreditCardView) findViewById(R.id.credit_card_view);
+        mCreditCardView = (CreditCardView) findViewById(com.cooltechworks.creditcarddesign.R.id.credit_card_view);
 
         Bundle state;
         if(savedInstanceState != null) {
@@ -80,7 +84,7 @@ public class CardEditActivity extends AppCompatActivity {
 
 
         checkParams(state);
-        loadPager(state);
+        loadPager();
 
 
     }
@@ -111,25 +115,23 @@ public class CardEditActivity extends AppCompatActivity {
 
     public void refreshNextButton() {
 
-        ViewPager pager = (ViewPager) findViewById(R.id.card_field_container_pager);
-
         int max = pager.getAdapter().getCount();
 
-        int text = R.string.next;
+        int text = com.cooltechworks.creditcarddesign.R.string.next;
 
         if(pager.getCurrentItem() == max -1) {
-            text = R.string.done;
+            text = com.cooltechworks.creditcarddesign.R.string.done;
         }
 
-        ((TextView)findViewById(R.id.next)).setText(text);
+        ((TextView)findViewById(com.cooltechworks.creditcarddesign.R.id.next)).setText(text);
     }
 
-    public void loadPager(Bundle state) {
-
-        ViewPager pager = (ViewPager) findViewById(R.id.card_field_container_pager);
+    public void loadPager() {
+        pager = (ViewPager) findViewById(R.id.card_field_container_pager);
         pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
 
             @Override
             public void onPageSelected(int position) {
@@ -149,38 +151,32 @@ public class CardEditActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPageScrollStateChanged(int state) {}
+            public void onPageScrollStateChanged(int state) {
+            }
         });
         pager.setOffscreenPageLimit(4);
 
-        mCardAdapter = new CardFragmentAdapter(getSupportFragmentManager(), state);
+        mCardAdapter = new Adapter();
         mCardAdapter.setOnCardEntryCompleteListener(new ICardEntryCompleteListener() {
             @Override
-            public void onCardEntryComplete(int currentIndex) {
-
+            public void onCardEntryComplete(CreditCardEntryView view) {
                 showNext();
             }
 
             @Override
-            public void onCardEntryEdit(int currentIndex, String entryValue) {
-                switch (currentIndex) {
-                    case 0:
-
-                        mCardNumber = entryValue.replace(CreditCardUtils.SPACE_SEPERATOR,"");
-                        mCreditCardView.setCardNumber(mCardNumber);
-                        break;
-                    case 1:
-                        mExpiry = entryValue;
-                        mCreditCardView.setCardExpiry(entryValue);
-                        break;
-                    case 2:
-                        mCVV = entryValue;
-                        mCreditCardView.setCVV(entryValue);
-                        break;
-                    case 3:
-                        mCardHolderName  = entryValue;
-                        mCreditCardView.setCardHolderName(entryValue);
-                        break;
+            public void onCardEntryEdit(CreditCardEntryView view, String entryValue) {
+                if (view instanceof CardNumberEntryView) {
+                    mCardNumber = entryValue.replace(CreditCardUtils.SPACE_SEPERATOR, "");
+                    mCreditCardView.setCardNumber(mCardNumber);
+                } else if (view instanceof CardExpiryEntryView) {
+                    mExpiry = entryValue;
+                    mCreditCardView.setCardExpiry(entryValue);
+                } else if (view instanceof CardCVVEntryView) {
+                    mCVV = entryValue;
+                    mCreditCardView.setCVV(entryValue);
+                } else {
+                    mCardHolderName = entryValue;
+                    mCreditCardView.setCardHolderName(entryValue);
                 }
             }
         });
@@ -195,24 +191,13 @@ public class CardEditActivity extends AppCompatActivity {
         outState.putString(EXTRA_CARD_EXPIRY,mExpiry);
         outState.putString(EXTRA_CARD_NUMBER,mCardNumber);
 
-        FragmentTransaction r = getSupportFragmentManager().beginTransaction();
-        for (Fragment f : getSupportFragmentManager().getFragments()) {
-            r.remove(f);
-        }
-        r.commitNow();
-
         super.onSaveInstanceState(outState);
-    }
-
-    public void onRestoreInstanceState(Bundle inState) {
-        super.onRestoreInstanceState(inState);
-        checkParams(inState);
     }
 
 
     public void showPrevious() {
 
-        final ViewPager pager = (ViewPager) findViewById(R.id.card_field_container_pager);
+        final ViewPager pager = (ViewPager) findViewById(com.cooltechworks.creditcarddesign.R.id.card_field_container_pager);
         int currentIndex = pager.getCurrentItem();
 
         if (currentIndex - 1 >= 0) {
@@ -224,8 +209,8 @@ public class CardEditActivity extends AppCompatActivity {
 
     public void showNext() {
 
-        final ViewPager pager = (ViewPager) findViewById(R.id.card_field_container_pager);
-        CardFragmentAdapter adapter = (CardFragmentAdapter) pager.getAdapter();
+        final ViewPager pager = (ViewPager) findViewById(com.cooltechworks.creditcarddesign.R.id.card_field_container_pager);
+        Adapter adapter = (Adapter) pager.getAdapter();
 
         int max = adapter.getCount();
         int currentIndex = pager.getCurrentItem();
@@ -266,7 +251,7 @@ public class CardEditActivity extends AppCompatActivity {
         // Checks whether a hardware keyboard is available
         if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
 
-            LinearLayout parent = (LinearLayout) findViewById(R.id.parent);
+            LinearLayout parent = (LinearLayout) findViewById(com.cooltechworks.creditcarddesign.R.id.parent);
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) parent.getLayoutParams();
             layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, 0);
             parent.setLayoutParams(layoutParams);
@@ -276,7 +261,7 @@ public class CardEditActivity extends AppCompatActivity {
 
     private void setKeyboardVisibility(boolean visible) {
 
-        final EditText editText = (EditText) findViewById(R.id.card_number_field);
+        final EditText editText = (EditText) findViewById(com.cooltechworks.creditcarddesign.R.id.card_number_field);
 
 
         if (!visible) {
@@ -287,11 +272,84 @@ public class CardEditActivity extends AppCompatActivity {
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
-    
+
     @Override
     public void onBackPressed() {
         this.finish();
     }
 
 
+    private class Adapter extends PagerAdapter implements IActionListener {
+
+
+        private ICardEntryCompleteListener onCardEntryCompleteListener;
+
+        public Adapter() {
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            CreditCardEntryView v;
+            switch (position) {
+                case 0:
+                    v = new CardNumberEntryView(CardEditActivity.this, mCardNumber);
+                    container.addView(v);
+                    break;
+                case 1:
+                    v = new CardExpiryEntryView(CardEditActivity.this, mExpiry);
+                    container.addView(v);
+                    break;
+                case 2:
+                    v = new CardCVVEntryView(CardEditActivity.this, mCVV);
+                    container.addView(v);
+                    break;
+                default:
+                    v = new CardNameEntryView(CardEditActivity.this, mCardHolderName);
+                    container.addView(v);
+                    break;
+            }
+            v.setActionListener(this);
+            return v;
+        }
+
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            container.removeView((View) object);
+        }
+
+        @Override
+        public int getCount() {
+            return 4;
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view == object;
+        }
+
+        public void setOnCardEntryCompleteListener(ICardEntryCompleteListener onCardEntryCompleteListener) {
+            this.onCardEntryCompleteListener = onCardEntryCompleteListener;
+        }
+
+        public void focus(int position) {
+
+        }
+
+        @Override
+        public void onActionComplete(CreditCardEntryView fragment) {
+            showNext();
+        }
+
+        @Override
+        public void onEdit(CreditCardEntryView fragment, String edit) {
+            onCardEntryCompleteListener.onCardEntryEdit(fragment, edit);
+        }
+    }
+
+    public interface ICardEntryCompleteListener {
+        void onCardEntryComplete(CreditCardEntryView view);
+
+        void onCardEntryEdit(CreditCardEntryView view, String entryValue);
+    }
 }

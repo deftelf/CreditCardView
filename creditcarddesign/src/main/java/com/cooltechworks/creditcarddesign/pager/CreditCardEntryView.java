@@ -1,14 +1,20 @@
 package com.cooltechworks.creditcarddesign.pager;
 
+import android.content.Context;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.CardView;
 import android.text.TextWatcher;
 
 /**
  * Created by sharish on 9/1/15.
  */
-public abstract  class CreditCardFragment extends Fragment implements TextWatcher, IFocus {
+public abstract class CreditCardEntryView extends CardView implements TextWatcher, IFocus {
 
     protected IActionListener mActionListener;
+
+    public CreditCardEntryView(Context context) {
+        super(context);
+    }
 
     public void setActionListener(IActionListener listener) {
         mActionListener = listener;
