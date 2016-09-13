@@ -40,6 +40,7 @@
                 android:layout_marginTop="@dimen/margin_small"
                 android:hint="MM/YY"
                 android:inputType="number"
+                android:imeOptions="flagNoExtractUi"
                 android:maxLength="5"
                 android:text="" />
 

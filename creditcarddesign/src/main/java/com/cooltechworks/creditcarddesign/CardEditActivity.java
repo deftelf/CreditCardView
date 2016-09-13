@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -68,15 +70,18 @@ public class CardEditActivity extends AppCompatActivity {
         setKeyboardVisibility(true);
         mCreditCardView = (CreditCardView) findViewById(R.id.credit_card_view);
 
-
+        Bundle state;
         if(savedInstanceState != null) {
-            checkParams(savedInstanceState);
+            state = savedInstanceState;
         }
         else {
-            checkParams(getIntent().getExtras());
+            state = getIntent().getExtras();
         }
 
-        loadPager();
+
+        checkParams(state);
+        loadPager(state);
+
 
     }
 
@@ -119,7 +124,7 @@ public class CardEditActivity extends AppCompatActivity {
         ((TextView)findViewById(R.id.next)).setText(text);
     }
 
-    public void loadPager() {
+    public void loadPager(Bundle state) {
 
         ViewPager pager = (ViewPager) findViewById(R.id.card_field_container_pager);
         pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -148,7 +153,7 @@ public class CardEditActivity extends AppCompatActivity {
         });
         pager.setOffscreenPageLimit(4);
 
-        mCardAdapter = new CardFragmentAdapter(getSupportFragmentManager(),getIntent().getExtras());
+        mCardAdapter = new CardFragmentAdapter(getSupportFragmentManager(), state);
         mCardAdapter.setOnCardEntryCompleteListener(new ICardEntryCompleteListener() {
             @Override
             public void onCardEntryComplete(int currentIndex) {
@@ -190,6 +195,11 @@ public class CardEditActivity extends AppCompatActivity {
         outState.putString(EXTRA_CARD_EXPIRY,mExpiry);
         outState.putString(EXTRA_CARD_NUMBER,mCardNumber);
 
+        FragmentTransaction r = getSupportFragmentManager().beginTransaction();
+        for (Fragment f : getSupportFragmentManager().getFragments()) {
+            r.remove(f);
+        }
+        r.commitNow();
 
         super.onSaveInstanceState(outState);
     }

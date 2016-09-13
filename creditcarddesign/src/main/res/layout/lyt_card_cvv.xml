@@ -41,6 +41,7 @@
                 android:layout_marginTop="@dimen/margin_small"
                 android:hint="XXX"
                 android:inputType="number"
+                android:imeOptions="flagNoExtractUi"
                 android:maxLength="3"
                 android:text=""
 
