@@ -4,9 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.v4.util.ArrayMap;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -41,6 +43,8 @@ public class CardEditActivity extends AppCompatActivity {
     private String mExpiry;
     private Adapter mCardAdapter;
     private ViewPager pager;
+
+    private SparseArray<CreditCardEntryView> views;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,8 +94,6 @@ public class CardEditActivity extends AppCompatActivity {
     }
 
     private void checkParams(Bundle bundle) {
-
-
         if(bundle == null) {
             return;
         }
@@ -100,13 +102,10 @@ public class CardEditActivity extends AppCompatActivity {
         mExpiry = bundle.getString(EXTRA_CARD_EXPIRY);
         mCardNumber = bundle.getString(EXTRA_CARD_NUMBER);
 
-
         mCreditCardView.setCVV(mCVV);
         mCreditCardView.setCardHolderName(mCardHolderName);
         mCreditCardView.setCardExpiry(mExpiry);
         mCreditCardView.setCardNumber(mCardNumber);
-
-
 
         if(mCardAdapter != null) {
             mCardAdapter.notifyDataSetChanged();
@@ -128,6 +127,34 @@ public class CardEditActivity extends AppCompatActivity {
 
     public void loadPager() {
         pager = (ViewPager) findViewById(R.id.card_field_container_pager);
+        pager.setOffscreenPageLimit(4);
+
+        views = new SparseArray<>(4);
+        mCardAdapter = new Adapter();
+        mCardAdapter.setOnCardEntryCompleteListener(new ICardEntryCompleteListener() {
+            @Override
+            public void onCardEntryComplete(CreditCardEntryView view) {
+                showNext();
+            }
+
+            @Override
+            public void onCardEntryEdit(CreditCardEntryView view, String entryValue) {
+                if (view instanceof CardNumberEntryView) {
+                    mCardNumber = entryValue.replace(CreditCardUtils.SPACE_SEPERATOR, "");
+                    mCreditCardView.setCardNumber(mCardNumber);
+                } else if (view instanceof CardExpiryEntryView) {
+                    mExpiry = entryValue;
+                    mCreditCardView.setCardExpiry(entryValue);
+                } else if (view instanceof CardCVVEntryView) {
+                    mCVV = entryValue;
+                    mCreditCardView.setCVV(entryValue);
+                } else {
+                    mCardHolderName = entryValue;
+                    mCreditCardView.setCardHolderName(entryValue);
+                }
+            }
+        });
+        pager.setAdapter(mCardAdapter);
         pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -154,34 +181,6 @@ public class CardEditActivity extends AppCompatActivity {
             public void onPageScrollStateChanged(int state) {
             }
         });
-        pager.setOffscreenPageLimit(4);
-
-        mCardAdapter = new Adapter();
-        mCardAdapter.setOnCardEntryCompleteListener(new ICardEntryCompleteListener() {
-            @Override
-            public void onCardEntryComplete(CreditCardEntryView view) {
-                showNext();
-            }
-
-            @Override
-            public void onCardEntryEdit(CreditCardEntryView view, String entryValue) {
-                if (view instanceof CardNumberEntryView) {
-                    mCardNumber = entryValue.replace(CreditCardUtils.SPACE_SEPERATOR, "");
-                    mCreditCardView.setCardNumber(mCardNumber);
-                } else if (view instanceof CardExpiryEntryView) {
-                    mExpiry = entryValue;
-                    mCreditCardView.setCardExpiry(entryValue);
-                } else if (view instanceof CardCVVEntryView) {
-                    mCVV = entryValue;
-                    mCreditCardView.setCVV(entryValue);
-                } else {
-                    mCardHolderName = entryValue;
-                    mCreditCardView.setCardHolderName(entryValue);
-                }
-            }
-        });
-
-        pager.setAdapter(mCardAdapter);
     }
 
     public void onSaveInstanceState(Bundle outState) {
@@ -308,7 +307,11 @@ public class CardEditActivity extends AppCompatActivity {
                     container.addView(v);
                     break;
             }
+            views.put(position, v);
             v.setActionListener(this);
+            if (position == pager.getCurrentItem()) {
+                v.focus();
+            }
             return v;
         }
 
@@ -333,7 +336,10 @@ public class CardEditActivity extends AppCompatActivity {
         }
 
         public void focus(int position) {
-
+            CreditCardEntryView view = views.get(position);
+            if (view != null) {
+                view.focus();
+            }
         }
 
         @Override

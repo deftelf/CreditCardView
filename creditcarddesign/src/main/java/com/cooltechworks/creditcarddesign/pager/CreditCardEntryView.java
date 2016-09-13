@@ -4,11 +4,12 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.CardView;
 import android.text.TextWatcher;
+import android.widget.FrameLayout;
 
 /**
  * Created by sharish on 9/1/15.
  */
-public abstract class CreditCardEntryView extends CardView implements TextWatcher, IFocus {
+public abstract class CreditCardEntryView extends FrameLayout implements TextWatcher, IFocus {
 
     protected IActionListener mActionListener;
 
